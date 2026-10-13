@@ -1,0 +1,42 @@
+[project]
+name = "weather-aware-truck-routing"
+version = "1.0.0"
+description = "Django API for weather-aware truck route planning"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=6.1.2",
+    "djangorestframework>=3.18.3",
+    "requests>=2.34.2",
+    "gunicorn>=26.2.0",
+    "psycopg[binary]>=3.3.6",
+    "dj-database-url>=3.1.2",
+    "django-cors-headers>=4.9.0",
+    "shapely>=2.2.0",
+    "geopy>=2.5.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-django>=4.14.0",
+    "ruff>=0.17.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py"]
+
+[tool.ruff]
+line-length = 100
+extend-exclude = ["planner/migrations"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "UP", "B", "SIM", "C4", "RUF"]
+# En dashes in ranges like "45–54 mph" match the spec's risk table on purpose.
+ignore = ["RUF001", "RUF002", "RUF003"]
+
+[tool.ruff.lint.per-file-ignores]
+"*/models.py" = ["RUF012"] # Django's Meta options are class-level lists by convention

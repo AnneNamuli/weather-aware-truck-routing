@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-truck}
+      POSTGRES_USER: ${POSTGRES_USER:-truck}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-truck}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432" # for local `uv run manage.py runserver` / pytest
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-truck}:${POSTGRES_PASSWORD:-truck}@db:5432/${POSTGRES_DB:-truck}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-change-me}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      OPEN_METEO_API_KEY: ${OPEN_METEO_API_KEY:-}
+      TRUCK_MAX_SPEED_MPH: ${TRUCK_MAX_SPEED_MPH:-65}
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      BACKEND_URL: http://backend:3000
+    ports:
+      - "${PORT:-3000}:80"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
